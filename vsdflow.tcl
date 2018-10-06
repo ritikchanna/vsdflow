@@ -329,7 +329,6 @@ close $sdc_file
 
 puts "\nInfo: SDC created. Please use constraints in path  $OutputDirectory/$DesignName.sdc"
 }
-
 #----------------------------------------------------------------------------#
 #-------------Hierarchy check and synthesis using yosys from qflow-----------#
 #----------------------------------------------------------------------------#
@@ -359,11 +358,11 @@ cd $OutputDirectory
 set err [catch {exec qflow -T osu018 synthesize $DesignName}]
 cd $working_dir
 
-if {[file exists $OutputDirectory/$DesignName.synth.v]} {
-	file delete -force $OutputDirectory/$DesignName.synth.v
-	}
+#if {[file exists $OutputDirectory/$DesignName.synth.v]} {
+#	file delete -force $OutputDirectory/$DesignName.synth.v
+#	}
 
-file link -symbolic $OutputDirectory/$DesignName.synth.v $OutputDirectory/synthesis/$DesignName.rtlnopwr.v 
+#file link -symbolic $OutputDirectory/$DesignName.synth.v $OutputDirectory/synthesis/$DesignName.rtlnopwr.v 
 }
 
 if {$run_synthesis == 1} {
@@ -389,19 +388,22 @@ if {$run_synthesis == 1} {
 #---------------------------------------------------------------------------------------------#
 
 
-set output [open $OutputDirectory/$DesignName.final.synth.v "w"]
+#set output [open $OutputDirectory/$DesignName.final.synth.v "w"]
 
-set filename "$OutputDirectory/$DesignName.synth.v"
-set fid [open $filename r] 
-        while {[gets $fid line] != -1} {
-	puts -nonewline $output [string map {"wire vdd = 1'b1;" "" "wire gnd = 1'b0;" "" "vdd" "1'h1" "gnd" "1'h0"} $line]
-	puts -nonewline $output "\n"
-}
-close $fid
-close $output
+#set filename "$OutputDirectory/${DesignName}_synth.rtlbb.v"
+#set fid [open $filename r] 
+#        while {[gets $fid line] != -1} {
+#	puts -nonewline $output [string map {"wire vdd = 1'b1;" "" "wire gnd = 1'b0;" "" "vdd" "1'h1" "gnd" "1'h0"} $line]
+#	puts -nonewline $output "\n"
+#}
+#close $fid
+#close $output
 
 puts "\nInfo: Please find the synthesized netlist for $DesignName at below path. You can use this netlist for STA or PNR"
-puts "\n$OutputDirectory/$DesignName.final.synth.v"
+puts "\n$OutputDirectory/synthesis/${DesignName}_synth.rtlbb.v"
+file copy -force $OutputDirectory/synthesis/${DesignName}.rtlbb.v $OutputDirectory/$DesignName.final.synth.v 
+source $proc_dir/read_sdc.proc
+read_sdc $OutputDirectory/$DesignName.sdc
 
 #--------------------------------------------------------------------------------------------------#
 #-------------------------Static timing analysis using Opentimer-----------------------------------#
@@ -414,7 +416,7 @@ if {$enable_prelayout_timing == 1} {
 
 	cd $OutputDirectory
 	catch {exec qflow sta $DesignName >& $OutputDirectory/$DesignName.vesta.log}
-	file copy -force $OutputDirectory/$DesignName.vesta.log $OutputDirectory/$DesignName.${prefix}.vesta.log
+	file copy -force $OutputDirectory/log/sta.log $OutputDirectory/$DesignName.${prefix}.vesta.log
 	puts "\nInfo: Pre-layout STA finished"
 }
 
@@ -424,9 +426,9 @@ if {$enable_prelayout_timing == 1} {
 
 puts "\nCreating a backup of synthesis netlist"
 
-file copy -force -force $OutputDirectory/synthesis/$DesignName.rtlnopwr.v $OutputDirectory/synthesis/$DesignName.rtlnopwr.mysynth.v
-file copy -force -force $OutputDirectory/synthesis/$DesignName.rtl.v $OutputDirectory/synthesis/$DesignName.rtl.mysynth.v
-file copy -force -force $OutputDirectory/synthesis/$DesignName.spc $OutputDirectory/synthesis/$DesignName.mysynth.spc
+#file copy -force -force $OutputDirectory/synthesis/$DesignName.rtlnopwr.v $OutputDirectory/synthesis/$DesignName.rtlnopwr.mysynth.v
+#file copy -force -force $OutputDirectory/synthesis/$DesignName.rtl.v $OutputDirectory/synthesis/$DesignName.rtl.mysynth.v
+#file copy -force -force $OutputDirectory/synthesis/$DesignName.spc $OutputDirectory/synthesis/$DesignName.mysynth.spc
 
 if {$run_place_and_route == 1} {
 	puts "\nPlace and Route step from qflow started"
@@ -446,11 +448,14 @@ if {$run_place_and_route == 1} {
 	puts "\nInfo: Post-layout STA started"
         cd $OutputDirectory
         catch {exec qflow backanno $DesignName >& $OutputDirectory/$DesignName.vesta.log}
-        file copy -force $OutputDirectory/$DesignName.vesta.log $OutputDirectory/$DesignName.postlayout.vesta.log
+        file copy -force $OutputDirectory/log/post_sta.log $OutputDirectory/$DesignName.postlayout.vesta.log
+	file copy -force $OutputDirectory/synthesis/${DesignName}.rtlbb.v $OutputDirectory/$DesignName.final.synth.v
 
         cd $working_dir
         set enable_prelayout_timing 0
         source $proc_dir/call_timer.tcl
+puts "\nInfo: Please find the synthesized netlist for $DesignName at below path. You can use this netlist for STA or PNR"
+puts "\n$OutputDirectory/synthesis/${DesignName}.rtlbb.v"
 
 	puts "\nInfo: Post-layout STA finished"
 }

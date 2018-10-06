@@ -21,8 +21,8 @@ read_lib -max $LateLibraryPath
 source $proc_dir/read_verilog.proc
 read_verilog $OutputDirectory/$DesignName.final.synth.v
 
-source $proc_dir/read_sdc.proc
-read_sdc $OutputDirectory/$DesignName.sdc
+#source $proc_dir/read_sdc.proc
+#read_sdc $OutputDirectory/$DesignName.sdc
 
 reopenStdout /dev/tty
 
@@ -48,7 +48,7 @@ close $spef_file
 }
 
 set conf_file [open $OutputDirectory/$DesignName.${prefix}.conf a]
-
+puts $conf_file "read_sdc $OutputDirectory/$DesignName.opentimer.sdc"
 if {$enable_prelayout_timing == 1} {
 	puts $conf_file "read_spef $OutputDirectory/synthesis/$DesignName.${prefix}.spef"
 	} else {
