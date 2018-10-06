@@ -48,6 +48,7 @@ while {[gets $timing_file line] != -1} {
         }
 }
 close $timing_file
-puts "read_sdc $sdc_dirname/$sdc_filename.opentimer.sdc"
+#puts "read_sdc $sdc_dirname/$sdc_filename.opentimer.sdc"
 close $ot_timing_file
+close $final_synth_netlist
 }
